@@ -1,0 +1,27 @@
+# Stage 4 (Test): evals for the agent configuration itself. A falling pass rate blocks
+# the config change.
+#
+# On-demand only for now: the token is tied to a Claude subscription, which has limited
+# usage. The playbook runs this automatically; to do that, add these triggers:
+#   pull_request:
+#     paths: ["CLAUDE.md", "REVIEW.md", ".claude/**", "prompts/**", "evals/**", "scripts/agent.sh"]
+#   schedule:
+#     - cron: "0 3 * * *"
+name: Agent evals
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-stack
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: make evals
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

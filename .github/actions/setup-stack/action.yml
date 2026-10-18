@@ -1,0 +1,14 @@
+# The CI half of the stack contract (the other half is the Makefile).
+# Node for the app, plus uv for the pipeline CLI in tools/sdlc.
+name: Setup stack
+description: Install the language toolchain and project dependencies
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+    - uses: astral-sh/setup-uv@v6
+    - shell: bash
+      run: make setup

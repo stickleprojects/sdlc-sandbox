@@ -1,0 +1,5 @@
+{
+  "name": "intent skill drafts a valid intent from a complete brief",
+  "prompt": "Use the intent skill. Do not ask questions: the brief is complete. Brief: viewers want to browse a catalogue of available videos on the StreamLite home page, showing each title and its length. Users: viewers. Systems: the StreamLite web server only. Constraint: no new runtime dependencies. Name the change browse-catalogue. Do not write a spec or code.",
+  "check": "test -f changes/0001-browse-catalogue/intent.md && ! test -e changes/0001-browse-catalogue/spec.md && make validate"
+}

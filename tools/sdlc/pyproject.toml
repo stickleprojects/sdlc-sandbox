@@ -1,0 +1,18 @@
+# Copy of the pipeline CLI from stickleprojects/claude-sdlc (src/sdlc).
+# Don't edit it here: change it upstream and copy it across.
+[project]
+name = "sdlc"
+version = "0.1.0"
+description = "Pipeline CLI: scaffold changes and validate the intent -> spec -> plan chain"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+sdlc = "sdlc.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sdlc"]
