@@ -1,17 +1,47 @@
 ---
 name: plan
-description: Stage 3 (Build). Save an approved plan-mode plan as changes/<slug>/plan.md. Use once the engineer has accepted a plan for a change that has intent.md and spec.md.
+description: Stage 3 (Build), before /build. Plan a change whose spec is merged, in plan mode, then save the approved plan as changes/<slug>/plan.md and open its PR. Works out which change to plan (asks when several are ready); on a change already planned, asks whether to replace the plan or build it; with nothing to plan, offers what comes before. Use when someone says "/plan", "/plan 0002", "plan the next change" or "save the plan".
 ---
 
-# Save the approved plan
+# Plan a change
 
-Planning itself happens in plan mode. Start Claude Code in plan mode (`claude --permission-mode plan`) with the change's `intent.md` and `spec.md`. The engineer iterates with Claude until the plan can be implemented, then approves it.
+## 1. Which change
+
+Follow `.claude/skills/routing.md`. The candidates are the changes whose next step is `plan`: the spec is merged, and there's no plan on main or in an open PR.
+
+- **The change named is already planned** (plan.md merged, or a plan PR open): don't start again silently. Ask: build it (`/build`, recommended, which you then run for them), work through the plan PR's review (`/pr`) if one is open, amend the plan (a new plan PR that changes part of it; a build in progress then goes back to a draft build.md), replace it, or stop.
+- **The plan is out of date** (`make next` says the spec changed after it): read what changed in the spec (`git log -p <plan's last commit>..origin/main -- changes/<slug>/spec.md`), then either amend the plan for it, or, if nothing in the plan is affected, confirm it by updating its `Spec:` line to say which spec commit it was checked against. Either way it goes through a plan PR.
+- **Its spec isn't merged yet:** say what it's waiting on (the spec PR and who reviews it), and offer `/pr` on that PR.
+- **Nothing to plan:** say so, with what each change is waiting on, and offer the step one stage back (routing step 4).
+
+## 2. Plan it in plan mode
+
+Planning happens in plan mode, with the change's `intent.md` (or `bug.md`) and `spec.md`. If this session isn't in plan mode, enter it (or ask the person to press Shift+Tab until it says plan mode). Read CLAUDE.md, the intent or bug, the spec, the code involved and every architecture decision record in `docs/adr/` (if there are any), then propose the plan. The engineer iterates with you until it can be implemented, then approves it.
+
+### Architecture check
+
+A single change rarely looks like an architecture decision. Several changes that each hand-build a piece a framework would provide do, and only the plan stage sees how a change is built. So before proposing, check the plan against the ADRs:
+
+- **A trigger is met.** For each ADR whose Status is `accepted`, read its **Revisit when** lines and ask whether this plan does what one describes. Judge by what the plan does, not by its wording.
+- **No ADR covers it.** The plan adds a framework, service or datastore, relies on an undocumented internal of a library, or builds by hand something a widely used library provides, for the second time or more in this repo (look at earlier plans under `changes/`).
+- **Build or adopt.** Whenever the plan builds by hand something a widely used library or framework provides, say in **Approach** which one and why it isn't used.
+
+When a trigger is met or no ADR covers the choice, tell the engineer in plain terms: the question ("Should we adopt X instead of building Y by hand?"), the ADR and trigger, and what the earlier changes built. Then ask them to choose, recommending one:
+
+- **Keep the current architecture.** The plan says why in **Risks**, and may suggest a new or sharper trigger for the ADR (a separate ADR PR, not part of this plan).
+- **Raise it with the tech lead or architect** (`docs/roles.md`). They write or update an ADR (from `templates/adr.md`, in `docs/adr/NNNN-<slug>.md`) before this plan merges; the plan may change as a result.
+
+Either way, record it under **Risks** as `Architecture decision needed: <question> (ADR NNNN, trigger: <which>)`, or `(no ADR)`, followed by the decision. The Claude review reports a plan that meets a trigger without this line. With no `docs/adr/` folder, still do the build-or-adopt and "no ADR covers it" checks, and suggest the tech lead start one with the decision this plan depends on.
+
+## 3. Save the approved plan
 
 Once the plan is approved:
 
 1. Copy `templates/plan.md` to `changes/<slug>/plan.md`. Fill it with the approved plan; don't add new scope.
-2. Under **Verification**, map each acceptance criterion from `spec.md` to an exact command and its expected result.
-3. For a bug fix, the first step is a failing test committed on its own. Later steps then run with `SDLC_LOCK_TESTS=1`, so the test can't be edited.
-4. Run `make validate`, then commit `plan.md` before writing any code.
+2. Keep the architecture check's outcome: the build-or-adopt reason in **Approach**, and any `Architecture decision needed:` line, with the engineer's decision, in **Risks**.
+3. Under **Verification**, map each acceptance criterion from `spec.md` to an exact command and its expected result.
+4. For a bug fix (a change that starts from `bug.md`, or any fix), the first step is a failing test committed on its own, one per acceptance criterion in the short spec, with the message `test(<slug>): failing test for <symptom>`. Once that commit is on the branch, the files it touched lock automatically for a change with `bug.md` (`scripts/tests-locked.sh`), so the failing test can't be edited; new tests in other files still can. Nobody needs to set `SDLC_LOCK_TESTS=1`.
+5. Size the steps to the change. A small change (a message, a one-line fix) needs one to three steps, not a breakdown: `/build` builds a plan that small in one session.
+6. Run `make validate`, then commit `plan.md` alone on `plan/<slug>` (by explicit path, never `git add -A`), push, and open its PR titled `plan(<slug>): <summary>`. No code is written before it merges. Follow the `agent-identity` skill for the commit trailer and PR signature.
 
-Implementation runs in its own worktree (`claude --worktree <slug>`). Finish it with `make check` and the `verifier` subagent before opening a PR.
+Then tell the engineer: once the plan PR merges, run `/build` (`/pr` handles its review first). `/build` builds it in its own worktree (`claude --worktree <slug>`): in one session for a small plan, or milestone by milestone from an approved `build.md` for a larger one. It finishes with `make check` and the `verifier` subagent before opening a PR.
