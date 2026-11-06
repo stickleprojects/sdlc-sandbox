@@ -1,0 +1,1 @@
+{"name":"spike-c-hono","private":true,"type":"module","dependencies":{"@hono/node-server":"2.1.6","hono":"4.13.16"}}
