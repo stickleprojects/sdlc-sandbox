@@ -10,10 +10,11 @@
 #   check     everything CI requires; exits non-zero on any failure
 #   new-change start a change: make new-change NAME=add-catalogue
 #   status    show the stage each change has reached
+#   next      each change's next step and the skill that owns it: make next REF=origin/main
 #   run       start the app on $PORT (default 3000)
-#   sync-sdlc pull the latest pipeline from claude-sdlc (REF=main by default)
+#   sync-sdlc pull the pipeline from claude-sdlc (latest release by default; REF=main for unreleased)
 
-.PHONY: setup fmt lint test validate check exec-bits new-change status run sync-sdlc evals
+.PHONY: setup fmt lint test validate check exec-bits new-change status next run sync-sdlc evals
 
 SDLC = uv run --project tools/sdlc sdlc
 
@@ -58,6 +59,9 @@ new-change:
 
 status:
 	@$(SDLC) status
+
+next:
+	@$(SDLC) next $(CHANGE) $(if $(REF),--ref $(REF))
 
 sync-sdlc:
 	scripts/sync-sdlc.sh $(REF)
