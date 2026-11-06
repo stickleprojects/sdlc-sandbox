@@ -15,7 +15,9 @@
 .claude/skills/sdlc/SKILL.md
 .claude/skills/security-policy/SKILL.md
 .claude/skills/spec/SKILL.md
+docs/agent-identity.md
 docs/roles.md
+docs/setup-agent-apps.md
 evals/run.sh
 .github/workflows/agent-evals.yml
 .github/workflows/ci.yml
@@ -25,9 +27,14 @@ evals/run.sh
 .github/workflows/spec-from-intent.yml
 prompts/spec-from-intent.md
 REVIEW.md
+scripts/agent-identity.sh
+scripts/agent-session.sh
 scripts/agent.sh
 scripts/bootstrap-github.sh
+scripts/create-agent-apps.py
+scripts/spec-pr.sh
 scripts/sync-sdlc.sh
+scripts/tests-locked.sh
 templates/adr.md
 templates/bug.md
 templates/bug-spec.md
