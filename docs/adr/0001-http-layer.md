@@ -177,5 +177,6 @@ Both share the seed data and HTML rendering, so the figures cover only the HTTP 
 - A plan hand-builds something a Hono middleware provides: cookies, sessions, CSRF, body or multipart parsing, CORS, auth, or a router.
 - A plan adds a second HTTP framework, or needs a Node HTTP feature that `@hono/node-server` can't expose.
 - `hono` or `@hono/node-server` goes 12 months without a release, announces maintenance mode, or loses its only npm publisher without a successor.
-- A high or critical Hono advisory affects a feature we use, or two advisories in 12 months hit the same area we rely on.
-- A plan needs request or response schema validation for the native API across more than a couple of routes (consider Hono's validator middleware, or Fastify).
+- A high or critical Hono advisory affects a feature we use.
+- Two published `hono` or `@hono/node-server` advisories within 12 months affect the same module (for example `serveStatic`, `csrf`, `jsx`, the body parser) that a merged change uses.
+- A plan adds request or response schema validation to 3 or more `/api/v1` routes (consider Hono's validator middleware, or Fastify).
