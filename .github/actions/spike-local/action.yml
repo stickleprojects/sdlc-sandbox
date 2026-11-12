@@ -3,4 +3,4 @@ runs:
   using: composite
   steps:
     - shell: bash
-      run: echo "RESULT: local action from caller repo $GITHUB_REPOSITORY"
+      run: echo "RESULT local action ran from the caller checkout of $GITHUB_REPOSITORY"
