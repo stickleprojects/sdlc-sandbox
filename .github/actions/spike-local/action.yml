@@ -1,0 +1,6 @@
+name: spike-local
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: echo "RESULT: local action from caller repo $GITHUB_REPOSITORY"

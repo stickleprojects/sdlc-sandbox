@@ -1,0 +1,17 @@
+# Spike for claude-sdlc#133 part 2 (temporary; delete with the spike branch).
+name: Spike caller
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  check:
+    uses: stickleprojects/claude-sdlc/.github/workflows/sdlc-spike.yml@726624dd6fda84130c46686ebdf78406679cfac2 # v0.0.0-spike
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
