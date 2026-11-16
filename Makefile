@@ -1,6 +1,7 @@
 # The stack contract (same targets as claude-sdlc). Hooks, CI and evals call ONLY these
 # targets. This repo's stack is TypeScript on Node 22: no build step, because Node runs
-# .ts directly. The pipeline CLI is the Python copy in tools/sdlc, run via uv.
+# .ts directly. The pipeline's own targets (new-change, status, next, clauses, exec-bits,
+# evals, sync-sdlc) come from .sdlc/sdlc.mk, whose tool needs only python3.
 #
 #   setup     install toolchain dependencies
 #   fmt       format code; FILES=... limits it to specific files (used by the edit hook)
@@ -8,22 +9,17 @@
 #   test      run the test suite (node --test)
 #   validate  check the intent -> spec -> plan artifact chain
 #   check     everything CI requires; exits non-zero on any failure
-#   new-change start a change: make new-change NAME=add-catalogue
-#   status    show the stage each change has reached
-#   next      each change's next step and the skill that owns it: make next REF=origin/main
 #   run       start the app on $PORT (default 3000)
-#   sync-sdlc pull the pipeline from claude-sdlc (latest release by default; REF=main for unreleased)
 
-.PHONY: setup fmt lint test validate check exec-bits new-change status next run sync-sdlc evals
+.PHONY: setup fmt lint test validate check run
 
-SDLC = uv run --project tools/sdlc sdlc
+include .sdlc/sdlc.mk
 
 # --- current stack: TypeScript on Node ---------------------------------------------
 TS_FILES = $(filter %.ts %.js %.json,$(FILES))
 
 setup:
 	npm ci
-	uv sync --project tools/sdlc
 
 fmt:
 ifdef FILES
@@ -47,24 +43,3 @@ validate:
 	$(SDLC) check
 
 check: lint test validate exec-bits
-
-# Committed scripts must be executable; a non-executable hook is skipped silently.
-exec-bits:
-	@bad=$$(git ls-files -s '*.sh' | awk '$$1 != "100755" {print $$4}'); \
-	test -z "$$bad" || { echo "not executable in git (git update-index --chmod=+x):"; echo "$$bad"; exit 1; }
-
-new-change:
-	@test -n "$(NAME)" || { echo "usage: make new-change NAME=kebab-name"; exit 2; }
-	$(SDLC) new $(NAME)
-
-status:
-	@$(SDLC) status
-
-next:
-	@$(SDLC) next $(CHANGE) $(if $(REF),--ref $(REF))
-
-sync-sdlc:
-	scripts/sync-sdlc.sh $(REF)
-
-evals:
-	./evals/run.sh

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-StreamLite is a lightweight video streaming service. It is the practice product for the [claude-sdlc](https://github.com/stickleprojects/claude-sdlc) pipeline: every feature moves through intent.md → spec.md → plan.md → code → PR under `changes/NNNN-name/`. `docs/roles.md` says who does what.
+StreamLite is a lightweight video streaming service. It is the practice product for the [claude-sdlc](https://github.com/stickleprojects/claude-sdlc) pipeline: every feature moves through intent.md → spec.md → plan.md → code → PR under `changes/NNNN-name/`. `.sdlc/docs/roles.md` says who does what.
 
 ## Commands
 
@@ -28,7 +28,7 @@ A healthy `make check` ends with `ok: N change(s) valid`.
 
 ## What belongs to whom
 
-- **Framework-owned** (overwritten by `make sync-sdlc`; change them upstream in claude-sdlc): `.claude/agents|hooks|skills|settings.json`, `.github/workflows/`, `scripts/agent.sh`, `scripts/bootstrap-github.sh`, `templates/`, `prompts/`, `evals/run.sh`, `REVIEW.md`, `docs/roles.md`, `tools/sdlc/src/`. `.sdlc-version` records the framework commit.
+- **Framework-owned** (updated by `make sync-sdlc`; change them upstream in claude-sdlc): everything in `.sdlc/`, the `sdlc-*` skill and agent stubs in `.claude/`, `.claude/settings.json` and the `sdlc-*` workflows. Local changes to framework files go in `.sdlc-local/` (`.sdlc/docs/overrides.md`). `.sdlc/version` records the framework commit.
 - **This repo**: the app (`src/`, `test/`), `Makefile`, `.github/actions/setup-stack/`, `CLAUDE.md`, `readme.md`, `evals/tasks/`, `changes/`.
 
 ## Guardrails

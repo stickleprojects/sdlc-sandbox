@@ -1,0 +1,68 @@
+# Stage 2 (Design), automated: when an accepted intent.md (or bug.md) merges to main, generate
+# spec.md and open it as a PR for the product owner. The agent never commits to main.
+# One PR per change, from branch spec/<slug>: a change whose spec PR is still open is skipped,
+# so intents merged close together never regenerate (and leave stale) each other's spec.
+name: Spec from intent
+
+on:
+  push:
+    branches: [main]
+    paths: ["changes/*/intent.md", "changes/*/bug.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Runs queue rather than overlap, so the second run sees the first run's PRs.
+concurrency:
+  group: spec-from-intent
+  cancel-in-progress: false
+
+jobs:
+  spec:
+    runs-on: ${{ vars.SDLC_RUNNER && !github.event.issue.pull_request && (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) && vars.SDLC_RUNNER || 'ubuntu-latest' }}
+    steps:
+      # Open spec PRs as the agent's App identity when it's set up (.sdlc/docs/agent-identity.md):
+      # PRs opened with the default GITHUB_TOKEN don't run CI until someone approves them.
+      - name: Agent identity token
+        id: agent
+        if: vars.SDLC_AGENT_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.SDLC_AGENT_APP_ID }}
+          private-key: ${{ secrets.SDLC_AGENT_APP_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.agent.outputs.token || github.token }}
+      - uses: ./.github/actions/setup-stack
+      - name: Find intents and bugs without a spec (or an open spec PR)
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pending=$(.sdlc/scripts/spec-pr.sh pending)
+          echo "pending<<EOF" >> "$GITHUB_OUTPUT"; echo "$pending" >> "$GITHUB_OUTPUT"; echo "EOF" >> "$GITHUB_OUTPUT"
+      # Into the job's temp folder, never globally (#136): a self-hosted runner keeps its home.
+      - name: Install Claude Code
+        if: steps.find.outputs.pending != ''
+        run: .sdlc/scripts/install-claude.sh
+      - name: Generate specs
+        if: steps.find.outputs.pending != ''
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          PENDING: ${{ steps.find.outputs.pending }}
+        run: |
+          { .sdlc/scripts/resolve.sh prompts/spec-from-intent.md; echo "$PENDING"; } | .sdlc/scripts/agent.sh -
+      - name: Open one PR per change
+        if: steps.find.outputs.pending != ''
+        env:
+          GH_TOKEN: ${{ steps.agent.outputs.token || github.token }}
+          SDLC_AGENT_APP_SLUG: ${{ steps.agent.outputs.app-slug }}
+          # Opt-in auto-merge for the spec PR (.sdlc/scripts/auto-merge.sh); empty means off.
+          SDLC_AUTO_MERGE: ${{ vars.SDLC_AUTO_MERGE }}
+          SDLC_AUTO_MERGE_CONFIRMED: ${{ vars.SDLC_AUTO_MERGE_CONFIRMED }}
+          PENDING: ${{ steps.find.outputs.pending }}
+        run: |
+          # shellcheck disable=SC2086  # one change folder per word
+          .sdlc/scripts/spec-pr.sh open $PENDING

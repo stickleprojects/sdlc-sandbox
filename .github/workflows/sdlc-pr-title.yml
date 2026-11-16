@@ -1,0 +1,49 @@
+# PR titles become the commit messages that drive semantic versioning
+# (scripts/next-version.sh) and the release notes, so they must follow the convention. A PR that
+# changes a gate artifact (intent, bug, spec or plan) must also say so in its type (#46).
+# The same job holds "no code before the plan" (#44): a change's branch that changes code needs
+# its plan.md, which the plan-gate hook alone can't guarantee.
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# A newer push or title edit on the same PR cancels the older check (#138).
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    runs-on: ${{ vars.SDLC_RUNNER && !github.event.issue.pull_request && (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) && vars.SDLC_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR: ${{ github.event.pull_request.number }}
+          BODY: ${{ github.event.pull_request.body }}
+          # A build PR may amend its plan when the repo opts in (#174).
+          SDLC_BUILD_AMENDS_PLAN: ${{ vars.SDLC_BUILD_AMENDS_PLAN }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename' \
+            > "$RUNNER_TEMP/files.txt"
+          printf '%s\n' "$BODY" > "$RUNNER_TEMP/body.md"
+          SDLC_PR_BODY_FILE="$RUNNER_TEMP/body.md" \
+            .sdlc/scripts/check-pr-title.sh "$TITLE" < "$RUNNER_TEMP/files.txt"
+      # `Bug path: full` is read from main's CLAUDE.md, not the PR's, so a PR can't turn the
+      # setting off for itself (#160).
+      - name: No code before the plan
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE_SHA"
+          git show "$BASE_SHA:CLAUDE.md" > "$RUNNER_TEMP/base-claude.md" 2>/dev/null || : > "$RUNNER_TEMP/base-claude.md"
+          SDLC_CLAUDE_MD="$RUNNER_TEMP/base-claude.md" \
+            .sdlc/scripts/check-plan-first.sh "$HEAD_REF" < "$RUNNER_TEMP/files.txt"
