@@ -26,6 +26,7 @@
 .sdlc/docs/overrides.md
 .sdlc/docs/roadmap-format.md
 .sdlc/docs/roles.md
+.sdlc/docs/rules.md
 .sdlc/docs/self-hosted-runner.md
 .sdlc/docs/settings.md
 .sdlc/docs/setup-agent-apps.md
@@ -60,6 +61,7 @@
 .sdlc/scripts/review-denials.sh
 .sdlc/scripts/review-findings.sh
 .sdlc/scripts/review-posted.sh
+.sdlc/scripts/review-threads.sh
 .sdlc/scripts/spec-pr.sh
 .sdlc/scripts/sync-sdlc.sh
 .sdlc/scripts/tests-locked.sh
