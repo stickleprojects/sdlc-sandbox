@@ -18,6 +18,7 @@ from sdlc.artifacts import (
     check_change,
     check_config,
     definition_of_done,
+    kind,
     next_slug,
     placeholders,
     stage,
@@ -85,8 +86,12 @@ LARGE_CHANGE_TRAILER = "Large-change"
 
 def _git(root: Path, *args: str) -> str | None:
     try:
-        result = subprocess.run(
-            ["git", *args], cwd=root, capture_output=True, text=True, check=False
+        result = subprocess.run(  # noqa: S603 - list args, no shell (#135)
+            ["git", *args],  # noqa: S607 - git from PATH, as every script here runs it
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
         )
     except FileNotFoundError:
         return None
@@ -273,6 +278,12 @@ def main(argv: list[str] | None = None) -> int:
     cl.add_argument("change", help="a change: 0002, 0002-name, or a folder path")
     cl.add_argument("--ref", help="only the requirements that are new or differ from this git ref")
 
+    kd = sub.add_parser(
+        "kind",
+        help="print a change's kind: feature, bug or tooling (the scripts read it, #221)",
+    )
+    kd.add_argument("change_dir", type=Path, help="a change folder, e.g. changes/0002-name")
+
     res = sub.add_parser(
         "resolve",
         help="print a framework file with the project's override applied (.sdlc-local/)",
@@ -286,6 +297,12 @@ def main(argv: list[str] | None = None) -> int:
         except OverrideError as e:
             print(e, file=sys.stderr)
             return 1
+        return 0
+    if args.command == "kind":
+        if not args.change_dir.is_dir():
+            print(f"no change folder {args.change_dir}", file=sys.stderr)
+            return 1
+        print(kind(args.change_dir))
         return 0
     if args.command == "new":
         return cmd_new(args.root, args.name, args.kind)
