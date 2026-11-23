@@ -57,6 +57,7 @@
 .sdlc/scripts/descopes-decided.sh
 .sdlc/scripts/descopes-status.sh
 .sdlc/scripts/install-claude.sh
+.sdlc/scripts/local-check.sh
 .sdlc/scripts/main-docs-only.sh
 .sdlc/scripts/pr-check-target.sh
 .sdlc/scripts/request-review.sh
