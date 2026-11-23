@@ -17,10 +17,13 @@ permissions:
 
 jobs:
   evals:
-    runs-on: ${{ vars.SDLC_RUNNER && !github.event.issue.pull_request && (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) && vars.SDLC_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (vars.SDLC_RUNNER_HEAVY || vars.SDLC_RUNNER) && !github.event.issue.pull_request && (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) && (vars.SDLC_RUNNER_HEAVY || vars.SDLC_RUNNER) || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-stack
+        # Needs (#239, .sdlc/docs/stack-needs.md): the evals.
+        env:
+          SDLC_STACK_NEEDS: full
       - run: .sdlc/scripts/install-claude.sh  # job-local, never global (#136)
       - run: make evals
         env:
