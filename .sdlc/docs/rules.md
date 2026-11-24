@@ -46,7 +46,7 @@ A holder can hold part of a rule only, such as the plan gate holding "no code be
 | `review.finding-readable` | Quote what you refer to, say why it matters, suggest a fix, say who decides | nothing |
 | `review.important-thread` | Every Important finding is its own thread, starting `**Important` | `check: .sdlc/scripts/review-findings.sh` |
 | `review.descope-thread` | A descope thread says `Descope: needs approval`; only a person's reply decides it | `check: .sdlc/scripts/descopes-decided.sh`, `check: .sdlc/scripts/descopes-status.sh` |
-| `review.nit-thread` | Nit threads start `**Nit:**` and aren't counted | `check: .sdlc/scripts/review-findings.sh` |
+| `review.nit-thread` | A Nit is a thread or a summary line starting `**Nit:**`; every counted Nit is in one | `check: .sdlc/scripts/review-findings.sh` |
 | `review.rereview-open-threads` | An open earlier thread still counts; a resolved but unaddressed one gets a new thread | `check: .sdlc/scripts/review-findings.sh` |
 | `review.hidden-count` | The summary ends with the hidden findings count | `check: .sdlc/scripts/review-findings.sh` |
 | `review.one-summary` | One summary comment per PR, replaced on each review, in a fixed order | nothing |
@@ -112,7 +112,7 @@ A holder can hold part of a rule only, such as the plan gate holding "no code be
 | `build.merge-never-rebase` | Merge, never rebase, on the build branch | `hook: .sdlc/hooks/production-gate.sh` |
 | `build.failing-test-locked` | A bug's failing test is committed first and its files lock | `hook: .sdlc/hooks/protect-paths.sh`, `check: .sdlc/scripts/tests-locked.sh` |
 | `build.flaky-tests` | Fix flaky tests at the cause; never skip or retry past them without the engineer | nothing |
-| `build.coverage` | Every build runs `make coverage`; a large build adds it | nothing |
+| `build.coverage` | Coverage runs before every merge: `make local-check` runs it, or the PR's CI where the `Local check:` line leaves it out; a large build adds it | `test: tests/scripts/test_local_check.py::test_a_line_runs_only_what_it_names_and_leaves_coverage_to_ci` |
 | `build.never-lower-threshold` | Never lower a coverage threshold or add an exclusion to get green | nothing |
 | `build.one-unit` | Stay inside the current unit of work | nothing |
 | `build.plan-approved` | Build only from a plan merged on main | `hook: .sdlc/hooks/plan-gate.sh`, `check: .sdlc/scripts/check-plan-first.sh` |
@@ -121,6 +121,7 @@ A holder can hold part of a rule only, such as the plan gate holding "no code be
 | `build.draft-never-built` | A draft build.md is committed but never built from | nothing |
 | `build.approval-no-open-questions` | An approved build.md has no open questions | `check: .sdlc/src/sdlc/artifacts.py::check_build` |
 | `build.repair-first` | Repair reopened milestones before new work | nothing |
+| `build.change-done` | The build PR sets `change.toml` to done | `check: .sdlc/scripts/check-plan-first.sh` |
 | `build.roadmap-row` | Mark the roadmap row done in the build PR; ask before marking a milestone done | `check: .sdlc/src/sdlc/roadmap.py::check_roadmap` |
 | `build.verifier` | Run the verifier before the PR; open it with unapproved large gaps listed first | nothing |
 | `build.pr-body-order` | The build PR body leads with what needs a decision | nothing |

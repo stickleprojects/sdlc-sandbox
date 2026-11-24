@@ -22,6 +22,7 @@
 .sdlc/agents/verifier.md
 .sdlc/docs/agent-identity.md
 .sdlc/docs/bug-fast-path.md
+.sdlc/docs/change-file.md
 .sdlc/docs/consumer-requests.md
 .sdlc/docs/overrides.md
 .sdlc/docs/roadmap-format.md
@@ -57,6 +58,7 @@
 .sdlc/scripts/descopes-decided.sh
 .sdlc/scripts/descopes-status.sh
 .sdlc/scripts/install-claude.sh
+.sdlc/scripts/local-check.sh
 .sdlc/scripts/main-docs-only.sh
 .sdlc/scripts/pr-check-target.sh
 .sdlc/scripts/request-review.sh
@@ -89,10 +91,12 @@
 .sdlc/src/sdlc/clauses.py
 .sdlc/src/sdlc/cli.py
 .sdlc/src/sdlc/__init__.py
+.sdlc/src/sdlc/meta.py
 .sdlc/src/sdlc/placeholders.toml
 .sdlc/src/sdlc/resolve.py
 .sdlc/src/sdlc/roadmap.py
 .sdlc/src/sdlc/routing.py
+.sdlc/src/sdlc/sweep.py
 .sdlc/templates/adr.md
 .sdlc/templates/bug.md
 .sdlc/templates/bug-spec.md
