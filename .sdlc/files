@@ -55,6 +55,7 @@
 .sdlc/scripts/check-pr-title.sh
 .sdlc/scripts/clause-check.sh
 .sdlc/scripts/create-agent-apps.py
+.sdlc/scripts/current-change.sh
 .sdlc/scripts/descopes-decided.sh
 .sdlc/scripts/descopes-status.sh
 .sdlc/scripts/install-claude.sh
