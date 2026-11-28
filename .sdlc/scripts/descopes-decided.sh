@@ -3,7 +3,9 @@
 # "Session decisions: needs approval" thread (#218): the one thread for everything a person
 # decided during the build session, its plan amendments (#174) and its descopes. It's read the
 # same way, so one person's reply approves all of them, never a line in build.md. An older
-# review's "Plan changes: needs approval" thread counts as one too.
+# review's "Plan changes: needs approval" thread counts as one too. So does a "CI change: needs
+# approval" thread (ADR 0001, #293): the review job posts it, not the reviewer, when a PR changes
+# a file that sets CI's rules (ci-changes.sh), and only an `Approved:` reply settles it.
 #
 # Usage: .sdlc/scripts/descopes-decided.sh <pr-number>
 #
@@ -26,19 +28,25 @@
 # the threads or comments can't be read.
 #
 # Env: GITHUB_REPOSITORY (owner/name; default: the gh repo of this checkout).
-#      REVIEW_BOT (default: claude[bot], the login claude-code-action comments as).
+#      REVIEW_BOT (default: github-actions[bot],claude[bot]): the reviewer's logins, comma-separated.
+#        The review posts with the job's token (ADR 0001); claude[bot] covers earlier reviews.
+#      CI_BOT (default: github-actions[bot], the login the review job posts a CI change as).
 set -uo pipefail
 
 pr="${1:-}"
-[[ "$pr" =~ ^[0-9]+$ ]] || { sed -n '2,22p' "$0" >&2; exit 2; }
+[[ "$pr" =~ ^[0-9]+$ ]] || { sed -n '2,24p' "$0" >&2; exit 2; }
 repo="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)}"
 [[ "$repo" == */* ]] || { echo "descopes-decided: can't tell which repo this is" >&2; exit 3; }
-bot="${REVIEW_BOT:-claude[bot]}"
-login="${bot%\[bot\]}"  # GraphQL names an App's account without the [bot] suffix
+bots="${REVIEW_BOT:-github-actions[bot],claude[bot]}"
+# As JSON arrays for jq: the REST logins, and GraphQL's, which drop an App's [bot] suffix.
+bots_json="[$(sed -E 's/[^,]+/"&"/g' <<<"$bots")]"
+logins_json="${bots_json//\[bot\]/}"
+ci_bot="${CI_BOT:-github-actions[bot]}"
+ci_login="${ci_bot%\[bot\]}"
 
 # When the review last posted or replaced its summary (the comment with the count line).
 reviewed="$(gh api "repos/$repo/issues/$pr/comments" --paginate \
-  --jq ".[] | select(.user.login == \"$bot\") | select(.body | test(\"<!--\\\\s*review-findings:\")) | .updated_at")" \
+  --jq ".[] | select(.user.login | IN($bots_json[])) | select(.body | test(\"<!--\\\\s*review-findings:\")) | .updated_at")" \
   || { echo "descopes-decided: can't read PR #$pr's comments" >&2; exit 3; }
 reviewed="$(sort <<<"$reviewed" | tail -1)"
 
@@ -53,9 +61,12 @@ threads="$(gh api graphql --paginate -f query="$query" -F owner="${repo%%/*}" \
   -F name="${repo#*/}" -F pr="$pr" --jq "
     .data.repository.pullRequest.reviewThreads.nodes[] | .isResolved as \$resolved | .comments.nodes
     | select(length > 0)
-    | select((.[0].author.login // \"\" | sub(\"\\\\[bot\\\\]\$\"; \"\")) == \"$login\")
-    | select(.[0].body | test(\"(Descope|Plan changes|Session decisions): needs approval\"))
-    | {kind: (if (.[0].body | test(\"Session decisions: needs approval\")) then \"session decision\"
+    | select(.[0].body | test(\"(Descope|Plan changes|Session decisions|CI change): needs approval\"))
+    | (.[0].body | test(\"CI change: needs approval\")) as \$ci
+    | select(.[0].author.login // \"\" | sub(\"\\\\[bot\\\\]\$\"; \"\") as \$l
+             | if \$ci then \$l == \"$ci_login\" else (\$l | IN($logins_json[])) end)
+    | {kind: (if \$ci then \"CI change\"
+              elif (.[0].body | test(\"Session decisions: needs approval\")) then \"session decision\"
               elif (.[0].body | test(\"Plan changes: needs approval\")) then \"plan change\" else \"descope\" end),
        resolved: \$resolved,
        first: (.[0].body | split(\"\\n\") | map(select(test(\"\\\\S\"))) | .[0] // \"\"),
@@ -71,6 +82,7 @@ short() {  # the finding's first line, without its markdown lead-in, for a statu
   text="${text#Descope: needs approval}"
   text="${text#Plan changes: needs approval}"
   text="${text#Session decisions: needs approval}"
+  text="${text#CI change: needs approval}"
   text="$(sed -E 's/^[.:]?\s*//' <<<"$text")"
   printf '%s' "${text:0:40}"
 }
@@ -87,9 +99,14 @@ while IFS= read -r thread; do
     case "$kind" in
       descope) decided+=("approved by @$approval") ;;
       "plan change") decided+=("plan changes approved by @$approval") ;;
+      "CI change") decided+=("CI change approved by @$approval") ;;
       *) decided+=("session decisions approved by @$approval") ;;
     esac
     continue
+  fi
+  if [[ "$kind" == "CI change" ]]; then  # nothing to build: only a person's approval settles it
+    echo "A CI change needs a person's approval: $(short "$first"). Reply Approved: <name>, <date>"
+    exit 1
   fi
   reply="$(jq -r '.people | last | select(.) | "\(.who) \(.at)"' <<<"$thread")"
   if [[ -z "$reply" ]]; then

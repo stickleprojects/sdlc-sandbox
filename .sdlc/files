@@ -15,6 +15,7 @@
 .github/workflows/sdlc-check-after-review.yml
 .github/workflows/sdlc-ci.yml
 .github/workflows/sdlc-claude-mention.yml
+.github/workflows/sdlc-claude-review-transition.yml
 .github/workflows/sdlc-claude-review.yml
 .github/workflows/sdlc-descopes.yml
 .github/workflows/sdlc-pr-title.yml
@@ -33,6 +34,7 @@
 .sdlc/docs/setup-agent-apps.md
 .sdlc/docs/stack-needs.md
 .sdlc/docs/tooling-path.md
+.sdlc/docs/work-on.md
 .sdlc/evals/run.sh
 .sdlc/.gitignore
 .sdlc/hooks/dispatch.sh
@@ -53,6 +55,8 @@
 .sdlc/scripts/check-gate.sh
 .sdlc/scripts/check-plan-first.sh
 .sdlc/scripts/check-pr-title.sh
+.sdlc/scripts/ci-changes.sh
+.sdlc/scripts/ci-change-thread.sh
 .sdlc/scripts/clause-check.sh
 .sdlc/scripts/create-agent-apps.py
 .sdlc/scripts/current-change.sh
@@ -61,6 +65,7 @@
 .sdlc/scripts/install-claude.sh
 .sdlc/scripts/local-check.sh
 .sdlc/scripts/main-docs-only.sh
+.sdlc/scripts/overlay-changes.sh
 .sdlc/scripts/pr-check-target.sh
 .sdlc/scripts/request-review.sh
 .sdlc/scripts/resolve.sh
@@ -73,6 +78,8 @@
 .sdlc/scripts/spec-pr.sh
 .sdlc/scripts/sync-sdlc.sh
 .sdlc/scripts/tests-locked.sh
+.sdlc/scripts/tidy-worktrees.py
+.sdlc/scripts/work-on.sh
 .sdlc/sdlc.mk
 .sdlc/skills/agent-identity/SKILL.md
 .sdlc/skills/build/SKILL.md
